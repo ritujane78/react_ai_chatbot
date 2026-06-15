@@ -1,10 +1,15 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import './ChatBotApp.css'
 
-const ChatBotApp = ({onGoBack, chats, setChats}) => {
+const ChatBotApp = ({onGoBack, chats, setChats, activeChat, setActiveChat, onNewChat}) => {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState(chats[0]?.messages || []);
 
+  useEffect(() => {
+    const activeChatObj = chats.find(chat => chat.id === activeChat)
+    setMessages(activeChatObj? activeChatObj.messages : []);
+
+  }, [activeChat, chats])
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   }
@@ -21,8 +26,8 @@ const ChatBotApp = ({onGoBack, chats, setChats}) => {
 
     setMessages(updatedMessages);
 
-    const updatedChats = chats.map((chat, index) => {
-        if (index === 0) {
+    const updatedChats = chats.map((chat) => {
+        if (chat.id === activeChat) {
             return {
                 ...chat,
                 messages: updatedMessages,
@@ -34,16 +39,25 @@ const ChatBotApp = ({onGoBack, chats, setChats}) => {
     setChats(updatedChats);
     setInputValue('');
   }
+const handleKeyDown = (e) => {
+  if(e.key == "Enter"){
+      e.preventDefault();
+      setMessages();
+  }
+}
+  const handleSelectChat = (id) =>{
+    setActiveChat(id);
+  }
   return (
     <div className='chat-app'>
         <div className="chat-list">
             <div className="chat-list-header">
                 <h2>Chat List</h2>
-                <i className="bx bx-edit-alt new-chat"> </i>
+                <i className="bx bx-edit-alt new-chat" onClick={onNewChat}> </i>
             </div>
-            {chats.map((chat, index) => (
-                <div key={index} className={`chat-list-item ${index === 0 ? 'active': ''}`}>
-                    <h4>{chat.id}</h4>
+            {chats.map((chat) => (
+                <div key={chat.id} className={`chat-list-item ${chat.id === activeChat ? 'active': ''}`} onClick={() => handleSelectChat(chat)}>
+                    <h4>{chat.displayId}</h4>
                     <i className="bx bx-x-circle"></i>
                 </div>
             ))}
@@ -67,7 +81,7 @@ const ChatBotApp = ({onGoBack, chats, setChats}) => {
                 placeholder='Type a message...'
                 value={inputValue}
                 onChange={handleInputChange}/>
-                <i className="fa-solid fa-paper-plane" onClick={sendMessage}></i>
+                <i className="fa-solid fa-paper-plane" onClick={sendMessage} onKeyDown={handleKeyDown}></i>
             </form>
         </div>
       
