@@ -1,7 +1,39 @@
-import React from 'react'
+import React, { useState } from 'react'
 import './ChatBotApp.css'
 
-const ChatBotApp = ({onGoBack}) => {
+const ChatBotApp = ({onGoBack, chats, setChats}) => {
+  const [inputValue, setInputValue] = useState('');
+  const [messages, setMessages] = useState(chats[0]?.messages || []);
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+  }
+  const sendMessage = () => {
+    if (inputValue.trim() === '') return;
+
+    const newMessage = {
+        type: 'prompt',
+        text: inputValue,
+        timestamp: new Date().toLocaleTimeString(),
+    };
+
+    const updatedMessages = [...messages, newMessage];
+
+    setMessages(updatedMessages);
+
+    const updatedChats = chats.map((chat, index) => {
+        if (index === 0) {
+            return {
+                ...chat,
+                messages: updatedMessages,
+            };
+        }
+        return chat;
+    });
+
+    setChats(updatedChats);
+    setInputValue('');
+  }
   return (
     <div className='chat-app'>
         <div className="chat-list">
@@ -9,18 +41,12 @@ const ChatBotApp = ({onGoBack}) => {
                 <h2>Chat List</h2>
                 <i className="bx bx-edit-alt new-chat"> </i>
             </div>
-            <div className="chat-list-item active">
-                <h4>Chat 19/06/2026 12:57:21 PM</h4>
-                <i className="bx bx-x-circle"></i>
-            </div>
-            <div className="chat-list-item">
-                <h4>Chat 19/06/2026 12:57:21 PM</h4>
-                <i className="bx bx-x-circle"></i>
-            </div>
-            <div className="chat-list-item">
-                <h4>Chat 19/06/2026 12:57:21 PM</h4>
-                <i className="bx bx-x-circle"></i>
-            </div>
+            {chats.map((chat, index) => (
+                <div key={index} className={`chat-list-item ${index === 0 ? 'active': ''}`}>
+                    <h4>{chat.id}</h4>
+                    <i className="bx bx-x-circle"></i>
+                </div>
+            ))}
         </div>
         <div className="chat-window">
             <div className="chat-title">
@@ -28,19 +54,20 @@ const ChatBotApp = ({onGoBack}) => {
                 <i className="bx bx-arrow-back arrow" onClick={onGoBack}></i>
             </div>
             <div className="chat">
-                <div className="prompt">Hi, how are you? 
-                    <span>12:59:51 PM </span></div>
-                <div className="response">Hello!  I'm just a computer program. So, I don't have felings.
-                    but I'm here and ready to assisst you. How can I help you today?
-                    <span>12:59:56 PM</span>
+                {messages.map((msg, index) => (
+                    <div key={index} className={msg.type === 'prompt'? 'prompt' : 'response'} > {msg.text}
+                    <span>{msg.timestamp}</span>
                 </div>
+                ))}
                 <div className="typing">typing...</div>
             </div>
-            <form className="msg-form">
+            <form className="msg-form" onSubmit={(e) => e.preventDefault()}>
                 <i className="fa-solid fa-smile smile emoji"></i>
                 <input type="text" className="msg-input" 
-                placeholder='Type a message...'/>
-                <i className="fa-solid fa-paper-plane"></i>
+                placeholder='Type a message...'
+                value={inputValue}
+                onChange={handleInputChange}/>
+                <i className="fa-solid fa-paper-plane" onClick={sendMessage}></i>
             </form>
         </div>
       
