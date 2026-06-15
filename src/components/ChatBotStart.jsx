@@ -1,10 +1,10 @@
 import React from 'react'
 import './ChatBotStart.css'
 
-const ChatBotStart = () => {
+const ChatBotStart = ({onStartApp}) => {
   return (
     <div className='start-page'>
-        <button className="start-page-btn">
+        <button className="start-page-btn" onClick={onStartApp}>
             Chat AI
         </button>
       
