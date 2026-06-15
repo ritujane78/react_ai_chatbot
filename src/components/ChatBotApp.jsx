@@ -22,27 +22,34 @@ const ChatBotApp = ({onGoBack, chats, setChats, activeChat, setActiveChat, onNew
         timestamp: new Date().toLocaleTimeString(),
     };
 
-    const updatedMessages = [...messages, newMessage];
+    if(!activeChat){
+        onNewChat(inputValue);
+        setInputValue('');  
+    }else{
+        const updatedMessages = [...messages, newMessage];
 
-    setMessages(updatedMessages);
+        setMessages(updatedMessages);
+        setInputValue('');
 
-    const updatedChats = chats.map((chat) => {
-        if (chat.id === activeChat) {
-            return {
-                ...chat,
-                messages: updatedMessages,
-            };
-        }
-        return chat;
-    });
+        const updatedChats = chats.map((chat) => {
+            if (chat.id === activeChat) {
+                return {
+                    ...chat,
+                    messages: updatedMessages,
+                };
+            }
+            return chat;
+        });
 
-    setChats(updatedChats);
-    setInputValue('');
+        setChats(updatedChats);
+    }
+
+    
   }
 const handleKeyDown = (e) => {
-  if(e.key == "Enter"){
+  if(e.key === "Enter"){
       e.preventDefault();
-      setMessages();
+      sendMessage();
   }
 }
   const handleSelectChat = (id) =>{
@@ -61,7 +68,7 @@ const handleKeyDown = (e) => {
         <div className="chat-list">
             <div className="chat-list-header">
                 <h2>Chat List</h2>
-                <i className="bx bx-edit-alt new-chat" onClick={onNewChat}> </i>
+                <i className="bx bx-edit-alt new-chat" onClick={() => onNewChat()}> </i>
             </div>
             {chats.map((chat) => (
                 <div key={chat.id} className={`chat-list-item ${chat.id === activeChat ? 'active': ''}`} onClick={() => handleSelectChat(chat)}>
@@ -91,8 +98,9 @@ const handleKeyDown = (e) => {
                 <input type="text" className="msg-input" 
                 placeholder='Type a message...'
                 value={inputValue}
-                onChange={handleInputChange}/>
-                <i className="fa-solid fa-paper-plane" onClick={sendMessage} onKeyDown={handleKeyDown}></i>
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}/>
+                <i className="fa-solid fa-paper-plane" onClick={sendMessage} ></i>
             </form>
         </div>
       
