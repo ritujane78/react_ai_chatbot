@@ -48,6 +48,14 @@ const handleKeyDown = (e) => {
   const handleSelectChat = (id) =>{
     setActiveChat(id);
   }
+  const handleDeleteChat = (id) =>{
+    const updatedChats = chats.filter(chat => chat.id !== id);
+    setChats(updatedChats);
+    if(id === activeChat){
+        setActiveChat(updatedChats.length > 0? updatedChats[0].id: null);
+    }
+
+  }
   return (
     <div className='chat-app'>
         <div className="chat-list">
@@ -58,7 +66,10 @@ const handleKeyDown = (e) => {
             {chats.map((chat) => (
                 <div key={chat.id} className={`chat-list-item ${chat.id === activeChat ? 'active': ''}`} onClick={() => handleSelectChat(chat)}>
                     <h4>{chat.displayId}</h4>
-                    <i className="bx bx-x-circle"></i>
+                    <i className="bx bx-x-circle" onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteChat(chat.id);
+                    }}></i>
                 </div>
             ))}
         </div>
