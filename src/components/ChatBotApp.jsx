@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import './ChatBotApp.css'
 
 const ChatBotApp = ({onGoBack, chats, setChats, activeChat, setActiveChat, onNewChat}) => {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState(chats[0]?.messages || []);
+  const [isTyping, setIsTyping] = useState(false);
+  const chatEndRef = useRef(null);
 
   useEffect(() => {
     const activeChatObj = chats.find(chat => chat.id === activeChat)
@@ -13,7 +15,7 @@ const ChatBotApp = ({onGoBack, chats, setChats, activeChat, setActiveChat, onNew
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   }
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (inputValue.trim() === '') return;
 
     const newMessage = {
@@ -42,9 +44,46 @@ const ChatBotApp = ({onGoBack, chats, setChats, activeChat, setActiveChat, onNew
         });
 
         setChats(updatedChats);
-    }
+        setIsTyping(true);
+        const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
-    
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: "gpt-5.4-mini",
+                messages: [{
+                    role: "user",
+                    content: inputValue
+                }],
+                max_completion_tokens: 500,
+            }),
+          })
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.log(errorData);
+            throw new Error(JSON.stringify(errorData, null, 2));
+          }
+          const data = await response.json();
+          const chatResponse = data.choices[0].message.content.trim();
+
+          const newResponse = {
+            type: 'response',
+            text: chatResponse,
+            timestamp: new Date().toLocaleTimeString()
+          }
+          const updatedMessagesWithResponse = [...updatedMessages, newResponse];
+          setMessages(updatedMessagesWithResponse);
+          setIsTyping(false);
+          const updatedChatsWithResponse = chats.map(chat =>{
+            if(chat.id === activeChat) return {...chat, messages: updatedMessagesWithResponse}
+            return chat;
+          })
+          setChats(updatedChatsWithResponse);
+        }
   }
 const handleKeyDown = (e) => {
   if(e.key === "Enter"){
@@ -61,8 +100,12 @@ const handleKeyDown = (e) => {
     if(id === activeChat){
         setActiveChat(updatedChats.length > 0? updatedChats[0].id: null);
     }
-
   }
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({behavior: 'smooth'})
+  }
+    , [messages]);
   return (
     <div className='chat-app'>
         <div className="chat-list">
@@ -71,7 +114,7 @@ const handleKeyDown = (e) => {
                 <i className="bx bx-edit-alt new-chat" onClick={() => onNewChat()}> </i>
             </div>
             {chats.map((chat) => (
-                <div key={chat.id} className={`chat-list-item ${chat.id === activeChat ? 'active': ''}`} onClick={() => handleSelectChat(chat)}>
+                <div key={chat.id} className={`chat-list-item ${chat.id === activeChat ? 'active': ''}`} onClick={() => handleSelectChat(chat.id)}>
                     <h4>{chat.displayId}</h4>
                     <i className="bx bx-x-circle" onClick={(e) => {
                         e.stopPropagation();
@@ -91,7 +134,9 @@ const handleKeyDown = (e) => {
                     <span>{msg.timestamp}</span>
                 </div>
                 ))}
-                <div className="typing">typing...</div>
+                {isTyping && <div className="typing">typing...</div>}
+                <div ref={chatEndRef}></div>
+                
             </div>
             <form className="msg-form" onSubmit={(e) => e.preventDefault()}>
                 <i className="fa-solid fa-smile smile emoji"></i>
@@ -107,5 +152,4 @@ const handleKeyDown = (e) => {
     </div>
   )
 }
-
 export default ChatBotApp
