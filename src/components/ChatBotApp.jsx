@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './ChatBotApp.css'
+import EmojiPicker from 'emoji-picker-react';
 
 const ChatBotApp = ({onGoBack, chats, setChats, activeChat, setActiveChat, onNewChat}) => {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState(chats[0]?.messages || []);
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   useEffect(() => {
     const activeChatObj = chats.find(chat => chat.id === activeChat)
@@ -15,6 +17,10 @@ const ChatBotApp = ({onGoBack, chats, setChats, activeChat, setActiveChat, onNew
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   }
+  const handleEmojiSelect = (emojiData) => {
+    setInputValue((prev) => prev + emojiData.emoji);
+  }
+
   const sendMessage = async () => {
     if (inputValue.trim() === '') return;
 
@@ -139,12 +145,19 @@ const handleKeyDown = (e) => {
                 
             </div>
             <form className="msg-form" onSubmit={(e) => e.preventDefault()}>
-                <i className="fa-solid fa-smile smile emoji"></i>
+                <i className="fa-solid fa-smile smile emoji" onClick={() => setShowEmojiPicker((prev) => setShowEmojiPicker(!prev))}></i>
+                {showEmojiPicker && (<div className="picker">
+                        <EmojiPicker onEmojiClick={handleEmojiSelect} />
+                    </div>
+                )
+                    }
                 <input type="text" className="msg-input" 
                 placeholder='Type a message...'
                 value={inputValue}
                 onChange={handleInputChange}
-                onKeyDown={handleKeyDown}/>
+                onKeyDown={handleKeyDown}
+                onFocus={() => setShowEmojiPicker(false)}
+                />
                 <i className="fa-solid fa-paper-plane" onClick={sendMessage} ></i>
             </form>
         </div>
