@@ -6,14 +6,21 @@ const ChatBotApp = ({onGoBack, chats, setChats, activeChat, setActiveChat, onNew
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState(chats[0]?.messages || []);
   const [isTyping, setIsTyping] = useState(false);
-  const chatEndRef = useRef(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
+  const chatEndRef = useRef(null);
 
   useEffect(() => {
-    const activeChatObj = chats.find(chat => chat.id === activeChat)
-    setMessages(activeChatObj? activeChatObj.messages : []);
+      const activeChatObj = chats.find(chat => chat.id === activeChat)
+      setMessages(activeChatObj? activeChatObj.messages : []);
+      
+    }, [activeChat, chats]);
 
-  }, [activeChat, chats])
+    useEffect(() => {
+      const storedMessages = JSON.parse(localStorage.getItem(activeChat)) || [];
+      setMessages(storedMessages);
+    }, [activeChat]);
+
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   }
@@ -37,6 +44,7 @@ const ChatBotApp = ({onGoBack, chats, setChats, activeChat, setActiveChat, onNew
         const updatedMessages = [...messages, newMessage];
 
         setMessages(updatedMessages);
+        localStorage.setItem(activeChat, JSON.stringify(updatedMessages));
         setInputValue('');
 
         const updatedChats = chats.map((chat) => {
@@ -50,6 +58,7 @@ const ChatBotApp = ({onGoBack, chats, setChats, activeChat, setActiveChat, onNew
         });
 
         setChats(updatedChats);
+        localStorage.setItem("chats", JSON.stringify(updatedChats));
         setIsTyping(true);
         const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
@@ -83,12 +92,14 @@ const ChatBotApp = ({onGoBack, chats, setChats, activeChat, setActiveChat, onNew
           }
           const updatedMessagesWithResponse = [...updatedMessages, newResponse];
           setMessages(updatedMessagesWithResponse);
+          localStorage.setItem(activeChat, JSON.stringify(updatedMessagesWithResponse));
           setIsTyping(false);
           const updatedChatsWithResponse = chats.map(chat =>{
             if(chat.id === activeChat) return {...chat, messages: updatedMessagesWithResponse}
             return chat;
           })
           setChats(updatedChatsWithResponse);
+          localStorage.setItem("chats", JSON.stringify(updatedChatsWithResponse));
         }
   }
 const handleKeyDown = (e) => {
@@ -103,6 +114,8 @@ const handleKeyDown = (e) => {
   const handleDeleteChat = (id) =>{
     const updatedChats = chats.filter(chat => chat.id !== id);
     setChats(updatedChats);
+    localStorage.setItem("chats", JSON.stringify(updatedChats));
+    localStorage.removeItem(id);
     if(id === activeChat){
         setActiveChat(updatedChats.length > 0? updatedChats[0].id: null);
     }
